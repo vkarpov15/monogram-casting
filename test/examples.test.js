@@ -131,4 +131,59 @@ describe('casting', function() {
       done(error);
     });
   });
+
+  it('throws if you cast an object to a primitive', function(done) {
+    co(function*() {
+      let db = yield monogram('mongodb://localhost:27017');
+
+      let schema = new monogram.Schema({
+        name: {
+          first: { $type: String },
+          last: { $type: String }
+        }
+      });
+
+      casting(schema);
+
+      let User = db.model({ collection: 'users', schema: schema });
+
+      let user = new User({}, false);
+
+      user.name = 'Val';
+
+      assert.throws(function() {
+        user.$cast();
+      }, /Could not cast 'Val' to Object/g);
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
+  it('ignores if $type not specified', function(done) {
+    co(function*() {
+      let db = yield monogram('mongodb://localhost:27017');
+
+      let schema = new monogram.Schema({
+        members: { $lookUp: { ref: 'Test' } }
+      });
+
+      casting(schema);
+
+      let Band = db.model({ collection: 'band', schema: schema });
+
+      let band = new Band({}, false);
+
+      band.members = { x: 1 };
+
+      assert.doesNotThrow(function() {
+        band.$cast();
+      });
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
 });
