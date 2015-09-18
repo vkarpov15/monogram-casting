@@ -76,4 +76,59 @@ describe('casting', function() {
       done(error);
     });
   });
+
+  it('casts into arrays', function(done) {
+    co(function*() {
+      let db = yield monogram('mongodb://localhost:27017');
+
+      let schema = new monogram.Schema({
+        members: [{ $type: monogram.ObjectId }]
+      });
+
+      casting(schema);
+
+      let Band = db.model({ collection: 'people', schema: schema });
+
+      let band = new Band({}, false);
+
+      band.members = '000000000000000000000001';
+
+      band.$cast();
+
+      assert.deepEqual(band.members,
+        [new monogram.ObjectId('000000000000000000000001')]);
+      assert.deepEqual(band.$delta().$set,
+        { members: [new monogram.ObjectId('000000000000000000000001')] });
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
+  it('casts deeply nested arrays', function(done) {
+    co(function*() {
+      let db = yield monogram('mongodb://localhost:27017');
+
+      let schema = new monogram.Schema({
+        points: [[{ $type: Number }]]
+      });
+
+      casting(schema);
+
+      let Polygon = db.model({ collection: 'polygons', schema: schema });
+
+      let p = new Polygon({}, false);
+      p.points = 1;
+
+      p.$cast();
+
+      assert.deepEqual(p.points, [[1]]);
+      assert.deepEqual(p.$delta().$set, { points: [[1]] });
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
 });

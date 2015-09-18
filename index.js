@@ -19,16 +19,16 @@ function cast(obj, schema) {
   visitObject(obj, schema, '');
 }
 
-function visitArray(arr, fn, path) {
+function visitArray(arr, schema, path) {
   let newPath = join(path, '$');
   if (!schema._paths[newPath] || !schema._paths[newPath].$type) {
     return;
   }
 
-  arr.forEach(function(v, index) {
+  arr.forEach(function(value, index) {
     if (schema._paths[newPath].$type === Array) {
       if (!Array.isArray(value)) {
-        value = obj[key] = [value];
+        value = arr[index] = [value];
       }
       visitArray(value, schema, newPath);
     } else if (schema._paths[newPath].$type === Object) {
@@ -36,13 +36,9 @@ function visitArray(arr, fn, path) {
         throw new Error('Could not cast ' + require('util').inspect(value) +
           ' to Object');
       }
-      if (value == null) {
-        delete obj[key];
-        return;
-      }
       visitObject(value, schema, newPath);
     } else if (!(value instanceof schema._paths[newPath].$type)) {
-      obj[key] = new schema._paths[newPath].$type(value);
+      arr[index] = schema._paths[newPath].$type(value);
     }
   });
 }
