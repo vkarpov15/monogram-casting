@@ -149,11 +149,18 @@ describe('casting', function() {
 
       let user = new User({}, false);
 
-      user.name = 'Val';
+      user.name = 'Axl Rose';
 
       assert.throws(function() {
         user.$cast();
-      }, /Could not cast 'Val' to Object/g);
+      }, /Could not cast 'Axl Rose' to Object/g);
+
+      user = new User({}, false);
+
+      user.name = { first: 'Axl', last: 'Rose' };
+      assert.doesNotThrow(function() {
+        user.$cast();
+      });
 
       done();
     }).catch(function(error) {
@@ -180,6 +187,78 @@ describe('casting', function() {
       assert.doesNotThrow(function() {
         band.$cast();
       });
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
+  it('throws if you try to set an array of objects to a primitive', function(done) {
+    co(function*() {
+      let db = yield monogram('mongodb://localhost:27017');
+
+      let schema = new monogram.Schema({
+        names: [{
+          first: { $type: String },
+          last: { $type: String }
+        }]
+      });
+
+      casting(schema);
+
+      let User = db.model({ collection: 'users', schema: schema });
+
+      let user = new User({}, false);
+
+      user.names = [];
+      user.names.push('Axl Rose');
+
+      assert.throws(function() {
+        user.$cast();
+      }, /Could not cast 'Axl Rose' to Object/g);
+
+      user = new User({}, false);
+      user.names = [['Axl Rose']];
+
+      assert.throws(function() {
+        user.$cast();
+      }, /Could not cast \[ 'Axl Rose' \] to Object/g);
+
+      user = new User({}, false);
+      user.names = [{ first: 'Axl', last: 'Rose' }];
+      assert.doesNotThrow(function() {
+        user.$cast();
+      });
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
+  it('removes null object keys', function(done) {
+    co(function*() {
+      let db = yield monogram('mongodb://localhost:27017');
+
+      let schema = new monogram.Schema({
+        name: {
+          first: { $type: String },
+          last: { $type: String }
+        }
+      });
+
+      casting(schema);
+
+      let User = db.model({ collection: 'users', schema: schema });
+
+      let user = new User({}, false);
+
+      user.name = null;
+
+      user.$cast();
+
+      assert.equal(Object.keys(user).length, 0);
 
       done();
     }).catch(function(error) {
