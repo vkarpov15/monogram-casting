@@ -32,10 +32,6 @@ function visitArray(arr, schema, path) {
       }
       visitArray(value, schema, newPath);
     } else if (schema._paths[newPath].$type === Object) {
-      if (typeof value !== 'object' || Array.isArray(value)) {
-        throw new Error('Could not cast ' + require('util').inspect(value) +
-          ' to Object');
-      }
       visitObject(value, schema, newPath);
     }
 
@@ -44,6 +40,11 @@ function visitArray(arr, schema, path) {
 }
 
 function visitObject(obj, schema, path) {
+  if (typeof obj !== 'object' || Array.isArray(obj)) {
+    throw new Error('Could not cast ' + require('util').inspect(obj) +
+      ' to Object');
+  }
+
   _.each(obj, function(value, key) {
     debug(key, value);
     let newPath = join(path, key);
@@ -58,10 +59,6 @@ function visitObject(obj, schema, path) {
       visitArray(value, schema, newPath);
       return;
     } else if (schema._paths[newPath].$type === Object) {
-      if (typeof value !== 'object' || Array.isArray(value)) {
-        throw new Error('Could not cast ' + require('util').inspect(value) +
-          ' to Object');
-      }
       if (value == null) {
         delete obj[key];
         return;
