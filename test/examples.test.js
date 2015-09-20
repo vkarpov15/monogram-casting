@@ -87,7 +87,7 @@ describe('casting', function() {
 
       casting(schema);
 
-      let Band = db.model({ collection: 'people', schema: schema });
+      let Band = db.model({ collection: 'bands', schema: schema });
 
       let band = new Band({}, false);
 
@@ -99,6 +99,20 @@ describe('casting', function() {
         [new monogram.ObjectId('000000000000000000000001')]);
       assert.deepEqual(band.$delta().$set,
         { members: [new monogram.ObjectId('000000000000000000000001')] });
+
+      // We can cast individual array elements...
+      band = new Band({ members: ['000000000000000000000001'] });
+      band.$cast();
+      assert.deepEqual(band.members,
+        [new monogram.ObjectId('000000000000000000000001')]);
+
+      // Or do no casting at all if it isn't necessary
+      band = new Band({
+        members: [new monogram.ObjectId('000000000000000000000001')]
+      });
+      band.$cast();
+      assert.deepEqual(band.members,
+        [new monogram.ObjectId('000000000000000000000001')]);
 
       done();
     }).catch(function(error) {

@@ -37,9 +37,9 @@ function visitArray(arr, schema, path) {
           ' to Object');
       }
       visitObject(value, schema, newPath);
-    } else if (!(value instanceof schema._paths[newPath].$type)) {
-      arr[index] = schema._paths[newPath].$type(value);
     }
+
+    handleCast(arr, index, schema._paths[newPath].$type);
   });
 }
 
@@ -56,6 +56,7 @@ function visitObject(obj, schema, path) {
         value = obj[key] = [value];
       }
       visitArray(value, schema, newPath);
+      return;
     } else if (schema._paths[newPath].$type === Object) {
       if (typeof value !== 'object' || Array.isArray(value)) {
         throw new Error('Could not cast ' + require('util').inspect(value) +
@@ -66,10 +67,17 @@ function visitObject(obj, schema, path) {
         return;
       }
       visitObject(value, schema, newPath);
-    } else if (!(value instanceof schema._paths[newPath].$type)) {
-      obj[key] = schema._paths[newPath].$type(value);
+      return;
     }
+
+    handleCast(obj, key, schema._paths[newPath].$type);
   });
+}
+
+function handleCast(obj, key, type) {
+  if (!(obj[key] instanceof type)) {
+    obj[key] = type(obj[key]);
+  }
 }
 
 function join(path, key) {
