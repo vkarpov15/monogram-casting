@@ -140,6 +140,10 @@ describe('casting', function() {
       assert.deepEqual(p.points, [[1]]);
       assert.deepEqual(p.$delta().$set, { points: [[1]] });
 
+      p.points = [[1]];
+      p.$cast();
+      assert.deepEqual(p.points, [[1]]);
+
       done();
     }).catch(function(error) {
       done(error);
@@ -187,7 +191,8 @@ describe('casting', function() {
       let db = yield monogram('mongodb://localhost:27017');
 
       let schema = new monogram.Schema({
-        members: { $lookUp: { ref: 'Test' } }
+        members: { $lookUp: { ref: 'Test' } },
+        tags: { $type: Array }
       });
 
       casting(schema);
@@ -197,6 +202,12 @@ describe('casting', function() {
       let band = new Band({}, false);
 
       band.members = { x: 1 };
+
+      assert.doesNotThrow(function() {
+        band.$cast();
+      });
+
+      band.tags = [1];
 
       assert.doesNotThrow(function() {
         band.$cast();
