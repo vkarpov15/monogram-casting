@@ -5,7 +5,7 @@ var casting = require('../');
 var co = require('co');
 var monogram = require('monogram');
 
-describe('casting', function() {
+describe('document casting', function() {
   it('ignores paths not defined in the schema', function(done) {
     co(function*() {
       let db = yield monogram('mongodb://localhost:27017');
@@ -284,6 +284,48 @@ describe('casting', function() {
       user.$cast();
 
       assert.equal(Object.keys(user).length, 0);
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+});
+
+describe('query casting', function() {
+  let db;
+
+  beforeEach(function(done) {
+    co(function*() {
+      db = yield monogram('mongodb://localhost:27017');
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
+  it('works', function(done) {
+    co(function*() {
+      let schema = new monogram.Schema({
+        _id: monogram.ObjectId,
+        test: Number
+      });
+
+      casting(schema);
+
+      let Test = db.model({ schema: schema, collection: 'test' })
+
+      let query = Test.find({
+        _id: '000000000000000000000001',
+        test: { $eq: '123' }
+      });
+
+      query.cast();
+
+      assert.deepEqual(query.s.filter, {
+        _id: monogram.ObjectId('000000000000000000000001'),
+        test: { $eq: 123 }
+      });
 
       done();
     }).catch(function(error) {

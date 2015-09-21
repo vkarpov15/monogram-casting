@@ -3,6 +3,9 @@
 var _ = require('lodash');
 var debug = require('debug')('monogram:casting:debug');
 
+const COMPARISON_SELECTORS = ['$eq', '$gt', '$gte', '$lt', '$lte', '$ne'];
+const ARRAY_SELECTORS = ['$in', '$nin'];
+
 module.exports = function(schema) {
   schema.queue(function() {
     this.$ignorePath(function(path) {
@@ -13,7 +16,42 @@ module.exports = function(schema) {
   schema.method('document', '$cast', function() {
     cast(this, schema);
   });
+
+  schema.method('query', 'cast', function() {
+    castFilter(this.s.filter, schema);
+  });
+
+  schema.middleware('find', function*(next) {
+    this.cast();
+    yield next;
+  });
 };
+
+function castFilter(filters, schema, path) {
+  _.each(filters, function(value, key) {
+    debug('loop', key, value);
+
+    let newPath = join(path, key);
+    if (!schema._paths[newPath] || !schema._paths[newPath].$type) {
+      return;
+    }
+
+    if (schema._paths[newPath].$type === Array) {
+      if (!Array.isArray(value)) {
+        value = filters[key] = [value];
+      }
+      castFilter(value, schema, newPath);
+    } else if (schema._paths[newPath].$type === Object) {
+      if (typeof value !== 'object' || Array.isArray(value)) {
+        throw new Error('Could not cast ' + require('util').inspect(obj) +
+          ' to Object');
+      }
+      castFilter(value, schema, newPath);
+    } else {
+      handleCastForQuery(filters, key, schema._paths[newPath].$type);
+    }
+  });
+}
 
 function cast(obj, schema) {
   visitObject(obj, schema, '');
@@ -21,7 +59,7 @@ function cast(obj, schema) {
 
 function visitArray(obj, key, path, schema) {
   debug('visitArray', obj, key, path, schema);
-  let curPath = join(path, typeof key === 'number' ? '$' : key);
+  let curPath = join(path, key);
   let newPath = join(curPath, '$');
   if (!schema._paths[newPath] || !schema._paths[newPath].$type) {
     debug('skipping', newPath);
@@ -73,6 +111,22 @@ function visitObject(obj, schema, path) {
   });
 }
 
+function handleCastForQuery(obj, key, type) {
+  let value = obj[key];
+  if (value && typeof value === 'object') {
+    let keys = Object.keys(value);
+    if (keys.length > 0) {
+      let firstKey = keys[0];
+      if (COMPARISON_SELECTORS.indexOf(firstKey) !== -1) {
+        handleCastForQuery(obj[key], firstKey, type);
+        return;
+      }
+    }
+  }
+
+  handleCast(obj, key, type);
+}
+
 function handleCast(obj, key, type) {
   if (!(obj[key] instanceof type)) {
     obj[key] = type(obj[key]);
@@ -80,6 +134,9 @@ function handleCast(obj, key, type) {
 }
 
 function join(path, key) {
+  if (typeof key === 'number') {
+    key = '$';
+  }
   if (path) {
     return path + '.' + key;
   }
