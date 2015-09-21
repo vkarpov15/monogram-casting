@@ -120,6 +120,14 @@ function handleCastForQuery(obj, key, type) {
       if (COMPARISON_SELECTORS.indexOf(firstKey) !== -1) {
         handleCastForQuery(obj[key], firstKey, type);
         return;
+      } else if (ARRAY_SELECTORS.indexOf(firstKey) !== -1) {
+        if (!Array.isArray(value[firstKey])) {
+          value[firstKey] = [value[firstKey]];
+        }
+        _.each(value[firstKey], function(v, key) {
+          handleCastForQuery(value[firstKey], key, type);
+        });
+        return;
       }
     }
   }

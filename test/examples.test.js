@@ -308,7 +308,8 @@ describe('query casting', function() {
     co(function*() {
       let schema = new monogram.Schema({
         _id: monogram.ObjectId,
-        test: Number
+        test: Number,
+        tags: String
       });
 
       casting(schema);
@@ -317,14 +318,16 @@ describe('query casting', function() {
 
       let query = Test.find({
         _id: '000000000000000000000001',
-        test: { $eq: '123' }
+        test: { $eq: '123' },
+        tags: { $in: [123] }
       });
 
       query.cast();
 
       assert.deepEqual(query.s.filter, {
         _id: monogram.ObjectId('000000000000000000000001'),
-        test: { $eq: 123 }
+        test: { $eq: 123 },
+        tags: { $in: ['123'] }
       });
 
       done();
