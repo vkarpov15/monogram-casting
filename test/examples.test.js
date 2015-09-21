@@ -330,6 +330,14 @@ describe('query casting', function() {
         tags: { $in: ['123'] }
       });
 
+      query = Test.find({
+        test: 'not a number'
+      });
+
+      assert.throws(function() {
+        query.cast();
+      }, /Could not cast 'not a number' to Number/g);
+
       done();
     }).catch(function(error) {
       done(error);

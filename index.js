@@ -6,6 +6,16 @@ var debug = require('debug')('monogram:casting:debug');
 const COMPARISON_SELECTORS = ['$eq', '$gt', '$gte', '$lt', '$lte', '$ne'];
 const ARRAY_SELECTORS = ['$in', '$nin'];
 
+let SPECIAL_CASES = new WeakMap();
+SPECIAL_CASES.set(Number, function(v) {
+  let casted = Number(v);
+  if (isNaN(casted)) {
+    throw new Error('Could not cast ' + require('util').inspect(v) +
+      ' to Number');
+  }
+  return casted;
+});
+
 module.exports = function(schema) {
   schema.queue(function() {
     this.$ignorePath(function(path) {
@@ -101,7 +111,6 @@ function visitObject(obj, schema, path) {
     } else if (schema._paths[newPath].$type === Object) {
       if (value == null) {
         delete obj[key];
-        return;
       }
       visitObject(value, schema, newPath);
       return;
@@ -137,7 +146,11 @@ function handleCastForQuery(obj, key, type) {
 
 function handleCast(obj, key, type) {
   if (!(obj[key] instanceof type)) {
-    obj[key] = type(obj[key]);
+    if (SPECIAL_CASES.has(type)) {
+      obj[key] = SPECIAL_CASES.get(type)(obj[key]);
+    } else {
+      obj[key] = type(obj[key]);
+    }
   }
 }
 
