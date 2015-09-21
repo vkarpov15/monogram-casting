@@ -19,18 +19,24 @@ function cast(obj, schema) {
   visitObject(obj, schema, '');
 }
 
-function visitArray(arr, schema, path) {
-  let newPath = join(path, '$');
+function visitArray(obj, key, path, schema) {
+  debug('visitArray', obj, key, path, schema);
+  let curPath = join(path, typeof key === 'number' ? '$' : key);
+  let newPath = join(curPath, '$');
   if (!schema._paths[newPath] || !schema._paths[newPath].$type) {
+    debug('skipping', newPath);
     return;
   }
 
+  let arr = obj[key];
+  if (!Array.isArray(arr)) {
+    arr = obj[key] = [arr];
+  }
+
+  debug('newPath', newPath, schema._paths[newPath].$type);
   arr.forEach(function(value, index) {
     if (schema._paths[newPath].$type === Array) {
-      if (!Array.isArray(value)) {
-        value = arr[index] = [value];
-      }
-      visitArray(value, schema, newPath);
+      visitArray(arr, index, curPath, schema);
     } else if (schema._paths[newPath].$type === Object) {
       visitObject(value, schema, newPath);
     }
@@ -46,17 +52,13 @@ function visitObject(obj, schema, path) {
   }
 
   _.each(obj, function(value, key) {
-    debug(key, value);
     let newPath = join(path, key);
     if (!schema._paths[newPath] || !schema._paths[newPath].$type) {
       return;
     }
 
     if (schema._paths[newPath].$type === Array) {
-      if (!Array.isArray(value)) {
-        value = obj[key] = [value];
-      }
-      visitArray(value, schema, newPath);
+      visitArray(obj, key, path, schema);
       return;
     } else if (schema._paths[newPath].$type === Object) {
       if (value == null) {
