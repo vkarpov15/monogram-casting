@@ -318,7 +318,7 @@ describe('query casting', function() {
 
       let query = Test.find({
         _id: '000000000000000000000001',
-        test: { $eq: '123' },
+        test: { $not: { $eq: '123' } },
         tags: { $in: [123] }
       });
 
@@ -326,7 +326,7 @@ describe('query casting', function() {
 
       assert.deepEqual(query.s.filter, {
         _id: monogram.ObjectId('000000000000000000000001'),
-        test: { $eq: 123 },
+        test: { $not: { $eq: 123 } },
         tags: { $in: ['123'] }
       });
 

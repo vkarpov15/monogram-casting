@@ -5,6 +5,7 @@ var debug = require('debug')('monogram:casting:debug');
 
 const COMPARISON_SELECTORS = ['$eq', '$gt', '$gte', '$lt', '$lte', '$ne'];
 const ARRAY_SELECTORS = ['$in', '$nin'];
+const LOGICAL_SELECTORS = ['$or', '$and', '$nor'];
 
 let SPECIAL_CASES = new WeakMap();
 SPECIAL_CASES.set(Number, function(v) {
@@ -105,6 +106,15 @@ function visitObject(obj, schema, path) {
       return;
     }
 
+    if (LOGICAL_SELECTORS.indexOf(key) !== -1) {
+      if (Array.isArray(value)) {
+        visitArray(value, schema, path);
+      } else {
+        visitObject(value, schema, path);
+      }
+      return;
+    }
+
     if (schema._paths[newPath].$type === Array) {
       visitArray(obj, key, path, schema);
       return;
@@ -126,7 +136,8 @@ function handleCastForQuery(obj, key, type) {
     let keys = Object.keys(value);
     if (keys.length > 0) {
       let firstKey = keys[0];
-      if (COMPARISON_SELECTORS.indexOf(firstKey) !== -1) {
+      if (COMPARISON_SELECTORS.indexOf(firstKey) !== -1 ||
+          firstKey === '$not') {
         handleCastForQuery(obj[key], firstKey, type);
         return;
       } else if (ARRAY_SELECTORS.indexOf(firstKey) !== -1) {
