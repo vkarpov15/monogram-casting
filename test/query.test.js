@@ -19,7 +19,9 @@ describe('query casting', function() {
         nested: {
           first: String,
           second: Number
-        }
+        },
+        docArray: [{ key: String, value: String }],
+        stringArray: [String]
       });
 
       casting(schema);
@@ -82,6 +84,68 @@ describe('query casting', function() {
       assert.deepEqual(query.s.filter, {
         'nested.first': '123',
         $text: { $search: 'abc' }
+      });
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
+  it('$elemMatch', function(done) {
+    co(function*() {
+      let query = Test.find({
+        docArray: {
+          $elemMatch: { key: 1, value: 2 }
+        }
+      });
+
+      query.cast();
+
+      assert.deepEqual(query.s.filter, {
+        docArray: {
+          $elemMatch: { key: '1', value: '2' }
+        }
+      });
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
+  it('$all', function(done) {
+    co(function*() {
+      let query = Test.find({
+        stringArray: { $all: [1, 2] }
+      });
+
+      query.cast();
+
+      assert.deepEqual(query.s.filter, {
+        stringArray: { $all: ['1', '2'] }
+      });
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
+  it('mongoose #3163', function(done) {
+    co(function*() {
+      let query = Test.find({
+        stringArray: {
+          $all: [{ $elemMatch: { $regex: 'abc' } }]
+        }
+      });
+
+      query.cast();
+
+      assert.deepEqual(query.s.filter, {
+        stringArray: {
+          $all: [{ $elemMatch: { $regex: /abc/ } }]
+        }
       });
 
       done();
