@@ -189,4 +189,30 @@ describe('query casting', function() {
       done(error);
     });
   });
+
+  it('multiple comparison selectors', function(done) {
+    co(function*() {
+      let query = Test.find({
+        test: {
+          $lte: '5',
+          $gte: '0',
+          $type: '16'
+        }
+      });
+
+      query.cast();
+
+      assert.deepEqual(query.s.filter, {
+        test: {
+          $lte: 5,
+          $gte: 0,
+          $type: 16
+        }
+      });
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
 });
