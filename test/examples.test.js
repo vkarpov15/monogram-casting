@@ -338,6 +338,19 @@ describe('query casting', function() {
         query.cast();
       }, /Could not cast 'not a number' to Number/g);
 
+      query = Test.find({
+        $or: [{ _id: '000000000000000000000001' }, { tags: { $in: [123] } }]
+      });
+
+      query.cast();
+
+      assert.deepEqual(query.s.filter, {
+        $or: [
+          { _id: monogram.ObjectId('000000000000000000000001') },
+          { tags: { $in: ['123'] } }
+        ]
+      });
+
       done();
     }).catch(function(error) {
       done(error);
