@@ -15,7 +15,11 @@ describe('query casting', function() {
       let schema = new monogram.Schema({
         _id: monogram.ObjectId,
         test: Number,
-        tags: String
+        tags: String,
+        nested: {
+          first: String,
+          second: Number
+        }
       });
 
       casting(schema);
@@ -40,6 +44,44 @@ describe('query casting', function() {
       assert.deepEqual(query.s.filter, {
         _id: { $type: 7 },
         test: { $exists: true }
+      });
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
+  it('nested objects', function(done) {
+    co(function*() {
+      let query = Test.find({
+        'nested.second': '1'
+      });
+
+      query.cast();
+
+      assert.deepEqual(query.s.filter, {
+        'nested.second': 1
+      });
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
+  it('ignores $text, etc.', function(done) {
+    co(function*() {
+      let query = Test.find({
+        'nested.first': 123,
+        $text: { $search: 'abc' }
+      });
+
+      query.cast();
+
+      assert.deepEqual(query.s.filter, {
+        'nested.first': '123',
+        $text: { $search: 'abc' }
       });
 
       done();
