@@ -21,7 +21,8 @@ describe('query casting', function() {
           second: Number
         },
         docArray: [{ key: String, value: String }],
-        stringArray: [String]
+        stringArray: [String],
+        mixedArray: Array
       });
 
       casting(schema);
@@ -66,6 +67,16 @@ describe('query casting', function() {
         'nested.second': 1
       });
 
+      query = Test.find({
+        nested: {
+          second: '1'
+        }
+      });
+
+      query.cast();
+
+      assert.deepEqual(query.s.filter, { nested: { second: 1 } });
+
       done();
     }).catch(function(error) {
       done(error);
@@ -83,6 +94,12 @@ describe('query casting', function() {
       assert.deepEqual(query.s.filter, {
         $or: [{ test: 1 }]
       });
+
+      query = Test.find({ test: { $in: '1' } });
+
+      query.cast();
+
+      assert.deepEqual(query.s.filter, { test: { $in: [1] } });
 
       done();
     }).catch(function(error) {
@@ -184,6 +201,16 @@ describe('query casting', function() {
         }
       });
 
+      query = Test.find({
+        stringArray: { $elemMatch: { $regex: 'abc' } }
+      });
+
+      query.cast();
+
+      assert.deepEqual(query.s.filter, {
+        stringArray: { $elemMatch: { $regex: /abc/ } }
+      });
+
       done();
     }).catch(function(error) {
       done(error);
@@ -208,6 +235,68 @@ describe('query casting', function() {
           $gte: 0,
           $type: 16
         }
+      });
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
+  it('ignores paths not in the schema', function(done) {
+    co(function*() {
+      let query = Test.find({
+        notInSchema: 1,
+        mixedArray: { $elemMatch: { a: 1 } }
+      });
+
+      query.cast();
+
+      assert.deepEqual(query.s.filter, {
+        notInSchema: 1,
+        mixedArray: { $elemMatch: { a: 1 } }
+      });
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
+  it('throws if you try to cast an object path to a number', function(done) {
+    co(function*() {
+      let query = Test.find({
+        nested: 1
+      });
+
+      assert.throws(function() {
+        query.cast();
+      }, /Could not cast 1 to Object/);
+
+      query = Test.find({
+        nested: [1]
+      });
+
+      assert.throws(function() {
+        query.cast();
+      }, /Could not cast \[ 1 \] to Object/);
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
+  it('casts objects to primitives', function(done) {
+    co(function*() {
+      let query = Test.find({
+        _id: new monogram.ObjectId('00000000000000000000000a')
+      });
+
+      query.cast();
+
+      assert.deepEqual(query.s.filter, {
+        _id: new monogram.ObjectId('00000000000000000000000a')
       });
 
       done();
