@@ -1,21 +1,13 @@
 'use strict';
 
-var _ = require('lodash');
-var debug = require('debug')('monogram:casting:debug');
+let _ = require('lodash');
+let debug = require('debug')('monogram:casting:debug');
+let handleCast = require('./lib/common').handleCast;
+let join = require('./lib/common').join;
 
 const COMPARISON_SELECTORS = ['$eq', '$gt', '$gte', '$lt', '$lte', '$ne'];
 const ARRAY_SELECTORS = ['$in', '$nin'];
 const LOGICAL_SELECTORS = ['$or', '$and', '$nor'];
-
-let SPECIAL_CASES = new WeakMap();
-SPECIAL_CASES.set(Number, function(v) {
-  let casted = Number(v);
-  if (isNaN(casted)) {
-    throw new Error('Could not cast ' + require('util').inspect(v) +
-      ' to Number');
-  }
-  return casted;
-});
 
 module.exports = function(schema) {
   schema.queue(function() {
@@ -153,24 +145,4 @@ function handleCastForQuery(obj, key, type) {
   }
 
   handleCast(obj, key, type);
-}
-
-function handleCast(obj, key, type) {
-  if (!(obj[key] instanceof type)) {
-    if (SPECIAL_CASES.has(type)) {
-      obj[key] = SPECIAL_CASES.get(type)(obj[key]);
-    } else {
-      obj[key] = type(obj[key]);
-    }
-  }
-}
-
-function join(path, key) {
-  if (typeof key === 'number') {
-    key = '$';
-  }
-  if (path) {
-    return path + '.' + key;
-  }
-  return key;
 }
