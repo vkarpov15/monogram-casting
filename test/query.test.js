@@ -72,6 +72,24 @@ describe('query casting', function() {
     });
   });
 
+  it('casts $or, etc. to an array', function(done) {
+    co(function*() {
+      let query = Test.find({
+        $or: { test: '1' }
+      });
+
+      query.cast();
+
+      assert.deepEqual(query.s.filter, {
+        $or: [{ test: 1 }]
+      });
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
   it('ignores $text, etc.', function(done) {
     co(function*() {
       let query = Test.find({
@@ -84,6 +102,24 @@ describe('query casting', function() {
       assert.deepEqual(query.s.filter, {
         'nested.first': '123',
         $text: { $search: 'abc' }
+      });
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
+  it('ignores $where, etc.', function(done) {
+    co(function*() {
+      let query = Test.find({
+        $where: 'this._id = 3'
+      });
+
+      query.cast();
+
+      assert.deepEqual(query.s.filter, {
+        $where: 'this._id = 3'
       });
 
       done();
