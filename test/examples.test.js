@@ -322,7 +322,7 @@ describe('query casting', function() {
         tags: { $in: [123] }
       });
 
-      query.cast();
+      query.castFilter();
 
       assert.deepEqual(query.s.filter, {
         _id: monogram.ObjectId('000000000000000000000001'),
@@ -335,14 +335,14 @@ describe('query casting', function() {
       });
 
       assert.throws(function() {
-        query.cast();
+        query.castFilter();
       }, /Could not cast 'not a number' to Number/g);
 
       query = Test.find({
         $or: [{ _id: '000000000000000000000001' }, { tags: { $in: [123] } }]
       });
 
-      query.cast();
+      query.castFilter();
 
       assert.deepEqual(query.s.filter, {
         $or: [
@@ -350,6 +350,53 @@ describe('query casting', function() {
           { tags: { $in: ['123'] } }
         ]
       });
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+});
+
+describe('update casting', function() {
+  let db;
+
+  beforeEach(function(done) {
+    co(function*() {
+      db = yield monogram('mongodb://localhost:27017');
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
+  it('works', function(done) {
+    co(function*() {
+      let schema = new monogram.Schema({
+        test: Number,
+        tags: String
+      });
+
+      casting(schema);
+
+      let Test = db.model({ schema: schema, collection: 'test' })
+
+      let query = Test.updateOne({},
+        { $set: { tags: 123 }, $inc: { test: '1' } });
+
+      query.castUpdate();
+
+      assert.deepEqual(query.s.update, {
+        $set: { tags: '123' },
+        $inc: { test: 1 }
+      });
+
+      query = Test.updateOne({},
+        { test: 'not a number' });
+
+      assert.throws(function() {
+        query.castUpdate();
+      }, /Could not cast 'not a number' to Number/g);
 
       done();
     }).catch(function(error) {

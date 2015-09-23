@@ -42,7 +42,7 @@ describe('query casting', function() {
         test: { $exists: 1 }
       });
 
-      query.cast();
+      query.castFilter();
 
       assert.deepEqual(query.s.filter, {
         _id: { $type: 7 },
@@ -61,7 +61,7 @@ describe('query casting', function() {
         'nested.second': '1'
       });
 
-      query.cast();
+      query.castFilter();
 
       assert.deepEqual(query.s.filter, {
         'nested.second': 1
@@ -73,7 +73,7 @@ describe('query casting', function() {
         }
       });
 
-      query.cast();
+      query.castFilter();
 
       assert.deepEqual(query.s.filter, { nested: { second: 1 } });
 
@@ -89,7 +89,7 @@ describe('query casting', function() {
         $or: { test: '1' }
       });
 
-      query.cast();
+      query.castFilter();
 
       assert.deepEqual(query.s.filter, {
         $or: [{ test: 1 }]
@@ -97,7 +97,7 @@ describe('query casting', function() {
 
       query = Test.find({ test: { $in: '1' } });
 
-      query.cast();
+      query.castFilter();
 
       assert.deepEqual(query.s.filter, { test: { $in: [1] } });
 
@@ -114,7 +114,7 @@ describe('query casting', function() {
         $text: { $search: 'abc' }
       });
 
-      query.cast();
+      query.castFilter();
 
       assert.deepEqual(query.s.filter, {
         'nested.first': '123',
@@ -133,7 +133,7 @@ describe('query casting', function() {
         $where: 'this._id = 3'
       });
 
-      query.cast();
+      query.castFilter();
 
       assert.deepEqual(query.s.filter, {
         $where: 'this._id = 3'
@@ -153,7 +153,7 @@ describe('query casting', function() {
         }
       });
 
-      query.cast();
+      query.castFilter();
 
       assert.deepEqual(query.s.filter, {
         docArray: {
@@ -173,7 +173,7 @@ describe('query casting', function() {
         stringArray: { $all: [1, 2] }
       });
 
-      query.cast();
+      query.castFilter();
 
       assert.deepEqual(query.s.filter, {
         stringArray: { $all: ['1', '2'] }
@@ -193,7 +193,7 @@ describe('query casting', function() {
         }
       });
 
-      query.cast();
+      query.castFilter();
 
       assert.deepEqual(query.s.filter, {
         stringArray: {
@@ -205,7 +205,7 @@ describe('query casting', function() {
         stringArray: { $elemMatch: { $regex: 'abc' } }
       });
 
-      query.cast();
+      query.castFilter();
 
       assert.deepEqual(query.s.filter, {
         stringArray: { $elemMatch: { $regex: /abc/ } }
@@ -227,7 +227,7 @@ describe('query casting', function() {
         }
       });
 
-      query.cast();
+      query.castFilter();
 
       assert.deepEqual(query.s.filter, {
         test: {
@@ -250,7 +250,7 @@ describe('query casting', function() {
         mixedArray: { $elemMatch: { a: 1 } }
       });
 
-      query.cast();
+      query.castFilter();
 
       assert.deepEqual(query.s.filter, {
         notInSchema: 1,
@@ -270,7 +270,7 @@ describe('query casting', function() {
       });
 
       assert.throws(function() {
-        query.cast();
+        query.castFilter();
       }, /Could not cast 1 to Object/);
 
       query = Test.find({
@@ -278,7 +278,7 @@ describe('query casting', function() {
       });
 
       assert.throws(function() {
-        query.cast();
+        query.castFilter();
       }, /Could not cast \[ 1 \] to Object/);
 
       done();
@@ -293,7 +293,7 @@ describe('query casting', function() {
         _id: new monogram.ObjectId('00000000000000000000000a')
       });
 
-      query.cast();
+      query.castFilter();
 
       assert.deepEqual(query.s.filter, {
         _id: new monogram.ObjectId('00000000000000000000000a')

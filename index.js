@@ -3,6 +3,7 @@
 let _ = require('lodash');
 let castDocument = require('./lib/document');
 let castFilter = require('./lib/filters');
+let castUpdate = require('./lib/update');
 let debug = require('debug')('monogram:casting:debug');
 let handleCast = require('./lib/common').handleCast;
 let join = require('./lib/common').join;
@@ -18,8 +19,12 @@ module.exports = function(schema) {
     castDocument(this, schema);
   });
 
-  schema.method('query', 'cast', function() {
+  schema.method('query', 'castFilter', function() {
     castFilter(this.s.filter, schema);
+  });
+
+  schema.method('query', 'castUpdate', function() {
+    castUpdate(this.s.update, schema, this.s.options);
   });
 
   schema.middleware('find', function*(next) {
