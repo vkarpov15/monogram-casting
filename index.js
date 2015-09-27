@@ -12,8 +12,12 @@ module.exports = function(schema) {
   schema.queue(function() {
     // Ignore changes to paths not in the schema
     this.$transform(function(path, change, value) {
-      if (!schema._paths[path.replace(/\.\d+\./, '.$.')]) {
+      path = path.replace(/\.\d+\./, '.$.');
+      if (!schema._paths[path]) {
         return null;
+      }
+      if (value && typeof value === 'object' && schema._paths[path].$schema) {
+        castDocument(value, schema, path);
       }
       return value;
     });

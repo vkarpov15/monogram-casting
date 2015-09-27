@@ -1,5 +1,6 @@
 'use strict';
 
+var _ = require('lodash');
 var assert = require('assert');
 var casting = require('../');
 var co = require('co');
@@ -28,7 +29,9 @@ describe('document casting', function() {
         { $set: { name: 'Axl Rose' }, $unset: {} });
 
       axl.role = 'Lead Singer';
+      axl.$cast();
 
+      assert.deepEqual(_.omit(axl, '_id'), { name: 'Axl Rose' });
       assert.deepEqual(axl.$delta(),
         { $set: { name: 'Axl Rose' }, $unset: {} });
 
@@ -283,6 +286,43 @@ describe('document casting', function() {
       user.$cast();
 
       assert.deepEqual(Object.keys(user), ['_id']);
+
+      done();
+    }).catch(function(error) {
+      done(error);
+    });
+  });
+
+  it('casting nested sets', function(done) {
+    co(function*() {
+      let db = yield monogram('mongodb://localhost:27017');
+
+      let schema = new monogram.Schema({
+        name: {
+          first: { $type: String },
+          last: { $type: String }
+        }
+      });
+
+      casting(schema);
+
+      let User = db.model({ collection: 'users', schema: schema });
+
+      let user = new User({}, false);
+
+      user.name = { first: 'Axl', last: 'Rose', band: "Guns N' Roses" };
+      user.other = 'abc';
+
+      assert.deepEqual(user.$delta(),
+        { $set: { name: { first: 'Axl', last: 'Rose'} }, $unset: {} });
+
+      user.$cast();
+
+      assert.deepEqual(_.omit(user, '_id'),
+        { name: { first: 'Axl', last: 'Rose' } });
+
+      assert.deepEqual(user.$delta(),
+        { $set: { name: { first: 'Axl', last: 'Rose'} }, $unset: {} });
 
       done();
     }).catch(function(error) {
