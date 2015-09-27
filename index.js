@@ -10,8 +10,12 @@ let join = require('./lib/common').join;
 
 module.exports = function(schema) {
   schema.queue(function() {
-    this.$ignorePath(function(path) {
-      return !schema._paths[path.replace(/\.\d+\./, '.$.')];
+    // Ignore changes to paths not in the schema
+    this.$transform(function(path, change, value) {
+      if (!schema._paths[path.replace(/\.\d+\./, '.$.')]) {
+        return null;
+      }
+      return value;
     });
   });
 

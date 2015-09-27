@@ -20,8 +20,7 @@ describe('document casting', function() {
 
       let axl = new Person({}, false);
 
-      assert.ok(!axl.$ignorePath('name'));
-      assert.ok(axl.$ignorePath('role'));
+      assert.ok(!axl.name);
 
       axl.name = 'Axl Rose';
 
@@ -283,7 +282,7 @@ describe('document casting', function() {
 
       user.$cast();
 
-      assert.equal(Object.keys(user).length, 0);
+      assert.deepEqual(Object.keys(user), ['_id']);
 
       done();
     }).catch(function(error) {
