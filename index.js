@@ -43,8 +43,28 @@ module.exports = function(schema) {
     yield next;
   });
 
-  schema.middleware('find', function*(next) {
-    this.cast();
+  let castFilter = function*(next) {
+    this.castFilter();
     yield next;
+  };
+  let castUpdate = function*(next) {
+    this.castUpdate();
+    yield next;
+  }
+
+  [
+    'count', 'distinct', 'find', 'findOne', 'deleteOne', 'deleteMany',
+    'replaceOne', 'updateOne', 'updateMany', 'findOneAndDelete',
+    'findOneAndReplace', 'findOneAndUpdate',
+    'cursor'
+  ].forEach(function(method) {
+    schema.middleware(method, castFilter);
+  });
+
+  [
+    'replaceOne', 'updateOne', 'updateMany', 'findOneAndReplace',
+    'findOneAndUpdate'
+  ].forEach(function(method) {
+    schema.middleware(method, castUpdate);
   });
 };
