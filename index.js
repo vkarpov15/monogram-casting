@@ -17,7 +17,7 @@ module.exports = function(schema) {
         return null;
       }
       if (value && typeof value === 'object' && schema._paths[path].$schema) {
-        castDocument(value, schema, path);
+        castDocument(value, schema, path, true);
       }
       return value;
     });
