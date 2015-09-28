@@ -152,7 +152,7 @@ describe('document casting', function() {
     });
   });
 
-  it('throws if you cast an object to a primitive', function(done) {
+  it('returns an error you cast an object to a primitive', function(done) {
     co(function*() {
       let db = yield monogram('mongodb://localhost:27017');
 
@@ -171,16 +171,15 @@ describe('document casting', function() {
 
       user.name = 'Axl Rose';
 
-      assert.throws(function() {
-        user.$cast();
-      }, /Could not cast 'Axl Rose' to Object/g);
+      let error = user.$cast();
+      assert.deepEqual(Object.keys(error.errors), ['name']);
+      assert.equal(error.errors['name'].toString(),
+        "Error: Could not cast 'Axl Rose' to Object");
 
       user = new User({}, false);
 
       user.name = { first: 'Axl', last: 'Rose' };
-      assert.doesNotThrow(function() {
-        user.$cast();
-      });
+      assert.equal(user.$cast(), undefined);
 
       done();
     }).catch(function(error) {
@@ -205,15 +204,11 @@ describe('document casting', function() {
 
       band.members = { x: 1 };
 
-      assert.doesNotThrow(function() {
-        band.$cast();
-      });
+      assert.equal(band.$cast(), undefined);
 
       band.tags = [1];
 
-      assert.doesNotThrow(function() {
-        band.$cast();
-      });
+      assert.equal(band.$cast(), undefined);
 
       done();
     }).catch(function(error) {
@@ -241,22 +236,22 @@ describe('document casting', function() {
       user.names = [];
       user.names.push('Axl Rose');
 
-      assert.throws(function() {
-        user.$cast();
-      }, /Could not cast 'Axl Rose' to Object/g);
+      let error = user.$cast();
+      assert.deepEqual(Object.keys(error.errors), ['names.0']);
+      assert.equal(error.errors['names.0'].toString(),
+        "Error: Could not cast 'Axl Rose' to Object");
 
       user = new User({}, false);
       user.names = [['Axl Rose']];
 
-      assert.throws(function() {
-        user.$cast();
-      }, /Could not cast \[ 'Axl Rose' \] to Object/g);
+      error = user.$cast();
+      assert.deepEqual(Object.keys(error.errors), ['names.0']);
+      assert.equal(error.errors['names.0'],
+        "Error: Could not cast [ 'Axl Rose' ] to Object");
 
       user = new User({}, false);
       user.names = [{ first: 'Axl', last: 'Rose' }];
-      assert.doesNotThrow(function() {
-        user.$cast();
-      });
+      assert.equal(user.$cast(), undefined);
 
       done();
     }).catch(function(error) {

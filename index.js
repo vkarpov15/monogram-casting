@@ -24,7 +24,7 @@ module.exports = function(schema) {
   });
 
   schema.method('document', '$cast', function() {
-    castDocument(this, schema);
+    return castDocument(this, schema);
   });
 
   schema.method('query', 'castFilter', function() {
