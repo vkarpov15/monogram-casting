@@ -35,6 +35,14 @@ module.exports = function(schema) {
     castUpdate(this.s.update, schema, this.s.options);
   });
 
+  schema.middleware('$save', function*(next) {
+    let error = this.$cast();
+    if (error.hasError) {
+      throw error;
+    }
+    yield next;
+  });
+
   schema.middleware('find', function*(next) {
     this.cast();
     yield next;
