@@ -171,15 +171,18 @@ describe('document casting', function() {
 
       user.name = 'Axl Rose';
 
+      assert.deepEqual(user.$delta(), { $set: {}, $unset: {} });
+
       let error = user.$cast();
       assert.deepEqual(Object.keys(error.errors), ['name']);
       assert.equal(error.errors['name'].toString(),
         "Error: Could not cast 'Axl Rose' to Object");
 
-      user = new User({}, false);
-
       user.name = { first: 'Axl', last: 'Rose' };
       assert.equal(user.$cast(), undefined);
+
+      assert.deepEqual(user.$delta(),
+        { $set: { name: { first: 'Axl', last: 'Rose' } }, $unset: {} });
 
       done();
     }).catch(function(error) {
@@ -309,7 +312,7 @@ describe('document casting', function() {
       user.other = 'abc';
 
       assert.deepEqual(user.$delta(),
-        { $set: { name: { first: 'Axl', last: 'Rose'} }, $unset: {} });
+        { $set: { name: { first: 'Axl', last: 'Rose' } }, $unset: {} });
 
       user.$cast();
 
@@ -317,7 +320,16 @@ describe('document casting', function() {
         { name: { first: 'Axl', last: 'Rose' } });
 
       assert.deepEqual(user.$delta(),
-        { $set: { name: { first: 'Axl', last: 'Rose'} }, $unset: {} });
+        { $set: { name: { first: 'Axl', last: 'Rose' } }, $unset: {} });
+
+      user.name = { first: 'Axl', last: 123, nested: { x : 1 } };
+      assert.deepEqual(user.$delta(),
+        { $set: { name: { first: 'Axl', last: 123 } }, $unset: {} });
+
+      user.$cast();
+
+      assert.deepEqual(user.$delta(),
+        { $set: { name: { first: 'Axl', last: '123' } }, $unset: {} });
 
       done();
     }).catch(function(error) {

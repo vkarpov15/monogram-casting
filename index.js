@@ -16,15 +16,15 @@ module.exports = function(schema) {
       if (!schema._paths[path]) {
         return null;
       }
-      if (value && typeof value === 'object' && schema._paths[path].$schema) {
-        castDocument(value, schema, path, true);
+      if (value && schema._paths[path].$schema) {
+        value = castDocument(value, schema, path, true).value;
       }
       return value;
     });
   });
 
   schema.method('document', '$cast', function() {
-    return castDocument(this, schema);
+    return castDocument(this, schema).error;
   });
 
   schema.method('query', 'castFilter', function() {
